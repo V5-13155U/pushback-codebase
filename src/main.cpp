@@ -48,6 +48,11 @@ pros::Motor intake(1); // intake motor on port 1
 pros::Motor hoodroller(14); // hood roller motor on port 14
 pros::Motor switchroller(12); // switch roller motor on port 12
 
+//Pneumatics Configuration
+pros::adi::DigitalOut matchloader('A'); // Matchloader
+pros::adi::DigitalOut wing('H'); // Descore Wing
+
+
 // imu
 pros::Imu imu(7);
 // horizontal tracking wheel encoder
@@ -161,6 +166,10 @@ void autonomous() {
     hoodroller.move(64);
     switchroller.move(64);
     
+    // extend both pistons
+    matchloader.set_value(false);
+    wing.set_value(true);
+    
     pros::delay(2000); // run for 2 seconds
     
     // stop all motors
@@ -169,6 +178,10 @@ void autonomous() {
     intake.move(0);
     hoodroller.move(0);
     switchroller.move(0);
+    
+    // retract both pistons
+    matchloader.set_value(true);
+    wing.set_value(false);
 }
 /**
  * Runs the operator control code. This function will be started in its own task
