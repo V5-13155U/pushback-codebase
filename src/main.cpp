@@ -23,9 +23,9 @@ lemlib::ControllerSettings lateral_controller(6, // proportional gain (kP)
                                               12, // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in inches
-                                              100, // small error range timeout, in milliseconds
+                                              50, // small error range timeout, in milliseconds
                                               3, // large error range, in inches
-                                              500, // large error range timeout, in milliseconds
+                                              150, // large error range timeout, in milliseconds
                                               20 // maximum acceleration (slew)
 );
 
@@ -35,9 +35,9 @@ lemlib::ControllerSettings angular_controller(8, // proportional gain (kP)
                                               40, // derivative gain (kD)
                                               0, // anti windup
                                               1, // small error range, in degrees
-                                              100, // small error range timeout, in milliseconds
+                                              50, // small error range timeout, in milliseconds
                                               5, // large error range, in degrees
-                                              300, // large error range timeout, in milliseconds
+                                              150, // large error range timeout, in milliseconds
                                               20 // maximum acceleration (slew)
 );
 
@@ -102,30 +102,20 @@ void on_center_button() {
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
-	pros::lcd::initialize();
-	pros::lcd::set_text(1, "Hello PROS User!");
-
-	pros::lcd::register_btn1_cb(on_center_button);
-	
-    imu.reset();
-while (imu.is_calibrating()) {
-    pros::delay(10);
-}
-
-    chassis.calibrate(); // calibrate sensors
-	// print position to brain screen
+    pros::lcd::initialize();
+    pros::lcd::register_btn1_cb(on_center_button);
+    chassis.calibrate();
+    while (imu.is_calibrating()) { // waits exactly as long as needed
+        pros::delay(10);
+    }
     pros::Task screen_task([&]() {
         while (true) {
-            // print robot location to the brain screen
-            pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
-            pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
-            pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
-            // delay to save resources
+            pros::lcd::print(0, "X: %f", chassis.getPose().x);
+            pros::lcd::print(1, "Y: %f", chassis.getPose().y);
+            pros::lcd::print(2, "Theta: %f", chassis.getPose().theta);
             pros::delay(20);
         }
-	});
-	pros::delay(3000); // delay to allow sensors to calibrate
-    autonomous();
+    });
 }
 
 /**
@@ -144,45 +134,28 @@ void disabled() {}
  * This task will exit when the robot is enabled and autonomous or opcontrol
  * starts.
  */
-void competition_initialize() {}
-
-/**
- * Runs the user autonomous code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the autonomous
- * mode. Alternatively, this function may be called in initialize or opcontrol
- * for non-competition testing purposes.
- *
- * If the robot is disabled or communications is lost, the autonomous task
- * will be stopped. Re-enabling the robot will restart the task, not re-start it
- * from where it left off.
- */
+void competition_initialize();
 
 void autonomous() {
-    // spin all motors at 50% power
-    left_motors.move(64);
-    right_motors.move(64);
-    intake.move(64);
-    hoodroller.move(64);
-    switchroller.move(64);
-    
-    // extend both pistons
+    chassis.setPose(0, 0, 0);
+    chassis.moveToPoint(0, 32.2, 3000, {.maxSpeed = 120});
+    chassis.turnToHeading(90, 3000, {.maxSpeed = 50});
     matchloader.set_value(false);
-    wing.set_value(true);
-    
-    pros::delay(2000); // run for 2 seconds
-    
-    // stop all motors
-    left_motors.move(0);
-    right_motors.move(0);
-    intake.move(0);
-    hoodroller.move(0);
-    switchroller.move(0);
-    
-    // retract both pistons
-    matchloader.set_value(true);
-    wing.set_value(false);
-}
+    intake.move(127);
+    pros::delay(500);   
+    chassis.moveToPoint(16.5, 32.2, 2500, {.maxSpeed = 100, .minSpeed = 120});
+    pros::delay(1150);   
+    chassis.moveToPoint(12.5, 32.2, 3000, {.forwards = false, .maxSpeed = 120}); // drive backwards 2.5"
+    chassis.turnToHeading(90, 3000, {.maxSpeed = 50});                           // correct heading to 90°
+    chassis.moveToPoint(-20, 32.5, 3250, {.forwards = false, .maxSpeed = 120});  // drive backwards 27"
+    pros::delay(1250); // run for 1 second
+    switchroller.move(-127);                                                      // spin switch roller reverse
+    hoodroller.move(-127);   
+    pros::delay(1000); // run for 1 second
+    switchroller.move(0); // ✅ stop
+    hoodroller.move(0);   // ✅ stop                                                     // spin hood roller reverse
+} 
+
 /**
  * Runs the operator control code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
@@ -197,21 +170,12 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	pros::Controller master(pros::E_CONTROLLER_MASTER);
-	pros::MotorGroup left_mg({1, -2, 3});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
-	pros::MotorGroup right_mg({-4, 5, -6});  // Creates a motor group with forwards port 5 and reversed ports 4 & 6
-
-
-	while (true) {
-		pros::lcd::print(0, "%d %d %d", (pros::lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
-		                 (pros::lcd::read_buttons() & LCD_BTN_CENTER) >> 1,
-		                 (pros::lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);  // Prints status of the emulated screen LCDs
-
-		// Arcade control scheme
-		int dir = master.get_analog(ANALOG_LEFT_Y);    // Gets amount forward/backward from left joystick
-		int turn = master.get_analog(ANALOG_RIGHT_X);  // Gets the turn left/right from right joystick
-		left_mg.move(dir - turn);                      // Sets left motor voltage
-		right_mg.move(dir + turn);                     // Sets right motor voltage
-		pros::delay(20);                               // Run for 20 ms then update
-	}
+    pros::Controller master(pros::E_CONTROLLER_MASTER);
+    while (true) {
+        int dir = master.get_analog(ANALOG_LEFT_Y);
+        int turn = master.get_analog(ANALOG_RIGHT_X);
+        left_motors.move(dir - turn);  // correct motors
+        right_motors.move(dir + turn);
+        pros::delay(20);
+    }
 }
