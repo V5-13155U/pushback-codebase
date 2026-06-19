@@ -6,6 +6,7 @@
     #include "pros/imu.hpp"
     #include "pros/motors.hpp"
     #include "pros/rtos.hpp"    
+    #include <cmath>
 
     // Drivetrain Configuration 
     pros::MotorGroup left_motors({-1, -3, -2}, pros::MotorGearset::blue); // left motors use 600 RPM cartridges
@@ -28,25 +29,25 @@
     12, // derivative gain (kD)
     3, // anti windup
     1, // small error range, in inches
-    10, // small error range timeout, in milliseconds
+    100, // small error range timeout, in milliseconds
     3, // large error range, in inches
-    20, // large error range timeout, in milliseconds
+    200, // large error range timeout, in milliseconds
     20 // maximum acceleration (slew)
     );
 
     // angular PID controller
-    lemlib::ControllerSettings angular_controller
-    (8, // proportional gain (kP)
-    0, // integral gain (kI)
-    40, // derivative gain (kD)
-    0, // anti windup
-    1, // small error range, in degrees
-    10, // small error range timeout, in milliseconds
-    5, // large error range, in degrees
-    20, // large error range timeout, in milliseconds
-    20 // maximum acceleration (slew)
+    lemlib::ControllerSettings angular_controller(
+        1.2,   // kP slightly lower than original 8
+        0,
+        2.15,  // kD slightly higher than original 40
+        0,
+        2,          
+        100,
+        5,
+        300,
+        10
     );
-	
+        
     // imu
     pros::Imu imu(7);
 
@@ -130,25 +131,28 @@
     void competition_initialize() {}
 
     void autonomous() {
-    pros::lcd::print(0, "connected to autonomous + calibrated");
-    chassis.setPose(0, 0, 0);
-    pros::delay(500);
+        chassis.setPose(0, 0, 0);
+        pros::delay(1000);
 
-    pros::Task screen_task([]() {
-        while (true) {
-            pros::lcd::print(0, "ROT %ld", vertical_encoder.get_position());
-            pros::lcd::print(1, "X %.2f", chassis.getPose().x);
-            pros::lcd::print(2, "Y %.2f", chassis.getPose().y);
-            pros::lcd::print(3, "Theta %.2f", chassis.getPose().theta);
-            pros::lcd::print(4, "IMU Heading %.2f", imu.get_heading());
-            pros::lcd::print(5, "IMU Rotation %.2f", imu.get_rotation());
-            pros::delay(100);
-        }
-    });
+        pros::Task* screen_task = new pros::Task([]() {
+            while (true) {
+                pros::lcd::print(0, "ROT %ld", vertical_encoder.get_position());
+                pros::lcd::print(1, "X %.2f", chassis.getPose().x);
+                pros::lcd::print(2, "Y %.2f", chassis.getPose().y);
+                pros::lcd::print(3, "Theta %.2f", chassis.getPose().theta);
+                pros::delay(500);
+            }
+        });
 
-    chassis.moveToPoint(0, 12, 10000, {.maxSpeed = 50});
+        // Test 1: drive forward 24 inches
+        chassis.setPose(0, 0, 0);
+        chassis.moveToPoint(0, 24, 15000, {.maxSpeed = 50}); // slower speed
+
+        // Test 2: turn 90 degrees only (skip 48in for now)
+        chassis.setPose(0, 0, 0);
+        chassis.turnToHeading(90, 8000, {.maxSpeed = 50});
     }
-
+    
     /**
     * Runs the operator control code. This function will be started in its own task
     * with the default priority and stack size whenever the robot is enabled via
