@@ -147,10 +147,16 @@
         // Test 1: drive forward 24 inches
         chassis.setPose(0, 0, 0);
         chassis.moveToPoint(0, 24, 15000, {.maxSpeed = 50}); // slower speed
-
-        // Test 2: turn 90 degrees only (skip 48in for now)
-        chassis.setPose(0, 0, 0);
+        chassis.turnToHeading(270, 8000, {.maxSpeed = 50});
+        chassis.moveToPoint(-24, 24, 15000, {.maxSpeed = 50}); // slower speed
+        chassis.turnToHeading(0, 8000, {.maxSpeed = 50});
+        chassis.moveToPoint(-24, 48, 15000, {.maxSpeed = 50}); // slower speed
         chassis.turnToHeading(90, 8000, {.maxSpeed = 50});
+        chassis.moveToPoint(0, 48, 15000, {.maxSpeed = 50}); // slower speed
+        chassis.turnToHeading(180, 8000, {.maxSpeed = 50});
+        chassis.moveToPoint(0, 24, 15000, {.maxSpeed = 50}); // slower speed
+        chassis.turnToHeading(0, 8000, {.maxSpeed = 50});
+        chassis.moveToPoint(0, 0, 15000, {.forwards = false, .maxSpeed = 50}); // slower speed
     }
     
     /**
