@@ -19,7 +19,7 @@
         11,
         lemlib::Omniwheel::NEW_325,
         360,
-        1
+        -1
     );
 
     // lateral PID controller
@@ -37,9 +37,9 @@
 
     // angular PID controller
     lemlib::ControllerSettings angular_controller(
-        1.2,   // kP slightly lower than original 8
+        0.90,   // kP slightly lower than original 8
         0,
-        2.15,  // kD slightly higher than original 40
+        0.5,  // kD slightly higher than original 40
         0,
         2,          
         100,
@@ -53,9 +53,16 @@
 
     // vertical tracking wheel encoder
     pros::Rotation vertical_encoder(6);
+    pros::Rotation horizontal_encoder(4);
 
     lemlib::TrackingWheel vertical_tracking_wheel(
         &vertical_encoder,
+        2.125,
+        0.55
+    );
+
+    lemlib::TrackingWheel horizontal_tracking_wheel(
+        &horizontal_encoder,
         2.125,
         0.55
     );
@@ -64,7 +71,7 @@
     lemlib::OdomSensors sensors(
         &vertical_tracking_wheel,
         nullptr,
-        nullptr,
+        &horizontal_tracking_wheel,
         nullptr,
         &imu
     );
@@ -148,18 +155,18 @@
         chassis.setPose(0, 0, 0);
         chassis.moveToPoint(0, 24, 15000, {.maxSpeed = 50}); // slower speed
         chassis.turnToHeading(270, 8000, {.maxSpeed = 50});
-        chassis.moveToPoint(-24, 24, 15000, {.maxSpeed = 50}); // slower speed
-        chassis.turnToHeading(0, 8000, {.maxSpeed = 50});
-        chassis.moveToPoint(-24, 48, 15000, {.maxSpeed = 50}); // slower speed
-        chassis.turnToHeading(90, 8000, {.maxSpeed = 50});
-        chassis.moveToPoint(0, 48, 15000, {.maxSpeed = 50}); // slower speed
-        chassis.turnToHeading(180, 8000, {.maxSpeed = 50});
-        chassis.moveToPoint(0, 24, 15000, {.maxSpeed = 50}); // slower speed
-        chassis.turnToHeading(0, 8000, {.maxSpeed = 50});
-        chassis.moveToPoint(0, 0, 15000, {.forwards = false, .maxSpeed = 50}); // slower speed
+        //chassis.moveToPoint(-24, 24, 15000, {.maxSpeed = 50}); // slower speed
+        //chassis.turnToHeading(0, 8000, {.maxSpeed = 50});
+        //chassis.moveToPoint(-24, 48, 15000, {.maxSpeed = 50}); // slower speed
+        //chassis.turnToHeading(90, 8000, {.maxSpeed = 50});
+        //chassis.moveToPoint(0, 48, 15000, {.maxSpeed = 50}); // slower speed
+        //chassis.turnToHeading(180, 8000, {.maxSpeed = 50});
+        //chassis.moveToPoint(0, 24, 15000, {.maxSpeed = 50}); // slower speed
+        //chassis.turnToHeading(0, 8000, {.maxSpeed = 50});
+        //chassis.moveToPoint(0, 0, 15000, {.forwards = false, .maxSpeed = 50}); // slower speed
     }
     
-    /**
+    /** 
     * Runs the operator control code. This function will be started in its own task
     * with the default priority and stack size whenever the robot is enabled via
     * the Field Management System or   the VEX Competition Switch in the operator
