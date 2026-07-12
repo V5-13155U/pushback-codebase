@@ -9,8 +9,8 @@
     #include <cmath>
 
     // Drivetrain Configuration 
-    pros::MotorGroup left_motors({-1, -3, -2}, pros::MotorGearset::blue); // left motors use 600 RPM cartridges
-    pros::MotorGroup right_motors({9, 10, 8}, pros::MotorGearset::blue); // right motors use 600 RPM cartridges
+    pros::MotorGroup left_motors({-1, -3, -2}, pros::MotorGearset::blue);
+    pros::MotorGroup right_motors({9, 10, 8}, pros::MotorGearset::blue);
 
     // Drivetrain Settings
     lemlib::Drivetrain drivetrain(
@@ -24,18 +24,18 @@
 
     // lateral PID controller
     lemlib::ControllerSettings lateral_controller
-    (10, // proportional gain (kP)
-    0, // integral gain (kI)
-    12, // derivative gain (kD)
-    3, // anti windup
-    1, // small error range, in inches
-    100, // small error range timeout, in milliseconds
-    3, // large error range, in inches
-    200, // large error range timeout, in milliseconds
-    20 // maximum acceleration (slew)
-    );
+        (10, // proportional gain (kP)
+        0, // integral gain (kI)
+        12, // derivative gain (kD)
+        3, // anti windup
+        1, // small error range, in inches
+        100, // small error range timeout, in milliseconds
+        3, // large error range, in inches
+        200, // large error range timeout, in milliseconds
+        20 // maximum acceleration (slew)
+        );
 
-    // angular PID controller
+    // angular PID controller   
     lemlib::ControllerSettings angular_controller(
         0.90,   // kP slightly lower than original 8
         0,
@@ -107,6 +107,7 @@
     * All other competition modes are blocked by initialize; it is recommended
     * to keep execution time for this mode under a few seconds.
     */
+    
     void initialize() {
         pros::lcd::initialize();
         pros::lcd::register_btn1_cb(on_center_button);
@@ -124,6 +125,7 @@
     * the VEX Competition Switch, following either autonomous or opcontrol. aWhen
     * the robot is enabled, this task will exit.
     */
+    
     void disabled() {}
 
     /**
@@ -135,6 +137,7 @@
     * This task will exit when the robot is enabled and autonomous or opcontrol
     * starts.
     */
+
     void competition_initialize() {}
 
     void autonomous() {
@@ -151,19 +154,9 @@
             }
         });
 
-        // Test 1: drive forward 24 inches
         chassis.setPose(0, 0, 0);
-        chassis.moveToPoint(0, 24, 15000, {.maxSpeed = 50}); // slower speed
+        chassis.moveToPoint(0, 24, 15000, {.maxSpeed = 50});
         chassis.turnToHeading(270, 8000, {.maxSpeed = 50});
-        //chassis.moveToPoint(-24, 24, 15000, {.maxSpeed = 50}); // slower speed
-        //chassis.turnToHeading(0, 8000, {.maxSpeed = 50});
-        //chassis.moveToPoint(-24, 48, 15000, {.maxSpeed = 50}); // slower speed
-        //chassis.turnToHeading(90, 8000, {.maxSpeed = 50});
-        //chassis.moveToPoint(0, 48, 15000, {.maxSpeed = 50}); // slower speed
-        //chassis.turnToHeading(180, 8000, {.maxSpeed = 50});
-        //chassis.moveToPoint(0, 24, 15000, {.maxSpeed = 50}); // slower speed
-        //chassis.turnToHeading(0, 8000, {.maxSpeed = 50});
-        //chassis.moveToPoint(0, 0, 15000, {.forwards = false, .maxSpeed = 50}); // slower speed
     }
     
     /** 
@@ -179,4 +172,31 @@
     * operator control task will be stopped. Re-enabling the robot will restart the
     * task, not resume it from where it left off.
     */
-    void opcontrol() {}
+
+   void opcontrol() {
+        pros::Controller controller(pros::E_CONTROLLER_MASTER);
+
+        auto curve = [](int input) -> int {
+            const int deadband = 5;
+            const double expo = 0.45;
+
+            if (std::abs(input) < deadband)
+                return 0;
+
+            double x = input / 127.0;
+
+            x = expo * x * x * x + (1.0 - expo) * x;
+
+            return static_cast<int>(x * 127.0);
+        };
+
+        while (true) {
+            int leftPower = curve(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y));
+            int rightPower = curve(controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y));
+
+            left_motors.move(leftPower);
+            right_motors.move(rightPower);
+
+            pros::delay(10);
+        }
+    }

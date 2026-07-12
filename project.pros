@@ -1,7 +1,7 @@
 {
   "py/object": "pros.conductor.project.Project",
   "py/state": {
-    "project_name": "testauton1",
+    "project_name": "alliance",
     "target": "v5",
     "templates": {
       "LemLib": {
@@ -635,8 +635,9 @@
       }
     },
     "upload_options": {
-      "icon": "alien",
-      "slot": 2
+      "icon": "planet",
+      "slot": 2,
+      "after": "screen"
     },
     "use_early_access": false
   }
