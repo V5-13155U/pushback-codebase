@@ -1,0 +1,23 @@
+Educational & VEX Robotics Competition License
+
+Copyright (c) 2026 13155U Vextronix
+
+1. Educational & Reference Use
+Permission is hereby granted, free of charge, to any person or robotics team obtaining a copy of this software and associated documentation files
+to view, study, and learn from the code for educational and reference purposes. 
+
+You are welcome to analyze the structure, PID implementations, subsystem logic, and PROS/LemLib setups contained within this repository to understand 
+how competitive VEX V5 software is organized.
+
+2. Competition Usage & VEX Rule Compliance Notice
+Direct competition use (copying and pasting this codebase onto a competition robot) is strongly discouraged, as every robot has unique gear ratios, 
+motor placements, wheel sizes, sensor offsets, and weight distributions. Running this code directly on a different chassis will likely result in erratic 
+movements, stall lockouts, or hardware damage.
+
+Also, in accordance with official VEX Robotics Competition rules regarding Student-Centered Design and Code Originality, all competition software must 
+represent the skill level, design, and engineering strengths of the students on that specific team. Submitting unoriginal or blindly copied code violates 
+the spirit and rules of the competition.
+
+3. Attribution
+If you use concepts, helper functions, or structural layouts inspired by this repository in your own project, please provide proper credit to 
+13155U in your engineering notebook and code comments.
